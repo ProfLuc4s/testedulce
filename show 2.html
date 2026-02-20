@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Show do Milh&atilde;o - Tudo ou Nada</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0f0c29;
+            background: -webkit-linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            background: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+        }
+        .option-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .option-btn:not(:disabled):hover {
+            transform: scale(1.03);
+            background-color: #facc15; /* yellow-400 */
+        }
+        .correct {
+            background-color: #22c55e !important; /* green-500 */
+            color: white !important;
+            transform: scale(1.05);
+            border-color: #16a34a; /* green-600 */
+        }
+        .incorrect {
+            background-color: #ef4444 !important; /* red-500 */
+            color: white !important;
+            transform: scale(1.05);
+            border-color: #dc2626; /* red-600 */
+        }
+        .lifeline-btn:disabled {
+            background-color: #475569; /* slate-600 */
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        .option-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        #continue-modal {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body class="text-white">
+
+    <!-- Efeitos Sonoros -->
+    <audio id="correct-sound" src="https://media.vocaroo.com/mp3/118ndZZk6kIQ" preload="auto"></audio>
+    <audio id="incorrect-sound" src="https://media.vocaroo.com/mp3/1iZylEVorALN" preload="auto"></audio>
+
+    <!-- Tela Inicial Fullscreen -->
+    <div id="start-screen" class="fixed inset-0 z-50 flex flex-col justify-end items-center p-12" style="background-image: url('https://i.postimg.cc/q7Kn4Q8x/Design-sem-nome-2.png'); background-size: cover; background-position: center;">
+        <button id="start-btn" class="bg-yellow-400 text-slate-900 font-bold py-4 px-10 rounded-full text-2xl uppercase hover:bg-yellow-300 transition-all duration-300 shadow-2xl hover:shadow-yellow-400/50 transform hover:scale-105">
+            Come&ccedil;ar Jogo
+        </button>
+    </div>
+
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div id="game-container" class="w-full max-w-3xl mx-auto">
+            <!-- Tela do Jogo -->
+            <div id="game-screen" class="hidden">
+                <div class="bg-slate-800/50 p-6 md:p-8 rounded-2xl shadow-lg border border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <div id="question-header" class="mb-6 text-center">
+                             <h2 class="text-xl font-bold text-yellow-400">PERGUNTA <span id="question-number">1</span> / 6</h2>
+                             <p class="text-2xl font-black text-white mt-2">VALENDO R$ 1.000.000!</p>
+                        </div>
+                        <p id="question-text" class="text-3xl md:text-4xl font-bold leading-tight text-center min-h-[100px]"></p>
+                        <div id="options-container" class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Op&ccedil;&otilde;es ser&atilde;o inseridas aqui -->
+                        </div>
+                    </div>
+                     <div id="lifelines-container" class="mt-8 pt-6 border-t border-slate-700">
+                        <h3 class="text-center text-lg font-bold text-yellow-400 mb-4 uppercase">Ajudas</h3>
+                        <div class="flex justify-center items-center flex-wrap gap-4">
+                            <button id="swap-btn" class="lifeline-btn bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M21 21v-5h-5"/></svg>
+                                Trocar
+                            </button>
+                            <button id="bomb-btn" class="lifeline-btn bg-orange-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-orange-700 transition-colors flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.25 9.75 16.5 12l-2.25 2.25"/><path d="m20.25 14.5-.9-2.43a1.5 1.5 0 0 0-2.7 0l-.9 2.43"/><path d="M14.291 19.564a2.5 2.5 0 1 0-4.582 0"/><path d="M12 15h.01"/><path d="M4.5 9.5a7.5 7.5 0 1 0 15 0 7.5 7.5 0 1 0-15 0Z"/></svg>
+                                50/50
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela Final -->
+    <div id="end-screen" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0,0,0,0.8);">
+        <div class="text-center bg-slate-900/90 border-2 border-yellow-400 p-10 rounded-2xl shadow-2xl">
+            <h2 id="end-title" class="text-5xl font-black text-yellow-400">Fim de Jogo!</h2>
+            <p id="end-message" class="mt-4 text-2xl text-slate-200"></p>
+            <button id="play-again-btn" class="mt-8 bg-yellow-400 text-slate-900 font-bold py-3 px-8 rounded-full text-xl uppercase hover:bg-yellow-300 transition-colors transform hover:scale-105">
+                Jogar Novamente
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Continua&ccedil;&atilde;o -->
+    <div id="continue-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4" style="background-color: rgba(0,0,0,0.8);">
+        <div class="bg-slate-900 border-2 border-yellow-400 p-8 rounded-2xl shadow-2xl text-center max-w-md w-full">
+            <h3 class="text-3xl font-black text-yellow-400">RESPOSTA CERTA!</h3>
+            <p class="text-slate-300 mt-4 text-lg">Voc&ecirc; acertou! Deseja continuar para a pr&oacute;xima pergunta?</p>
+            <div class="mt-8 flex justify-center gap-4">
+                <button id="stop-game-btn" class="bg-red-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-red-700 transition-colors">Desistir</button>
+                <button id="continue-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-colors">Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- BANCO DE DADOS DE PERGUNTAS ---
+        const questions = {
+            facil: [
+                { question: "Um m&eacute;dico te d&aacute; 3 comprimidos e diz para voc&ecirc; tomar um a cada meia hora. Quanto tempo levar&aacute; para tomar todos os comprimidos?", options: ["Uma hora e meia", "Uma hora", "Meia hora", "Duas horas"], answer: 1 },
+                { question: "Se h&aacute; 12 ovelhas em um pasto e 3 delas pulam a cerca, quantas ovelhas ficam no pasto?", options: ["9", "15", "12", "3"], answer: 2 },
+                { question: "O pai de Maria tem cinco filhas: Lal&aacute;, Lel&eacute;, Lili, Lol&oacute; e...?", options: ["Lul&uacute;", "Maria", "Zaz&aacute;", "N&atilde;o d&aacute; pra saber"], answer: 1 },
+                { question: "Se voc&ecirc; tem apenas um palito de f&oacute;sforo e entra em um quarto escuro com uma vela, um fog&atilde;o a lenha e um lampi&atilde;o, o que voc&ecirc; acende primeiro?", options: ["A vela", "O lampi&atilde;o", "O fog&atilde;o a lenha", "O palito de f&oacute;sforo"], answer: 3 },
+                { question: "Alguns meses t&ecirc;m 31 dias. Outros t&ecirc;m 30. Quantos meses do ano t&ecirc;m pelo menos 28 dias?", options: ["Apenas um", "Nenhum", "Todos os doze", "Depende se o ano &eacute; bissexto"], answer: 2 },
+                { question: "Numa corrida, voc&ecirc; ultrapassa a pessoa que est&aacute; em segundo lugar. Em que posi&ccedil;&atilde;o voc&ecirc; fica?", options: ["Em primeiro lugar", "Em segundo lugar", "Em terceiro lugar", "Em &uacute;ltimo lugar"], answer: 1 },
+                { question: "Se voc&ecirc; est&aacute; em uma sala com 3 ma&ccedil;&atilde;s e pega 2, com quantas ma&ccedil;&atilde;s voc&ecirc; fica?", options: ["Com uma", "Com duas", "Com tr&ecirc;s", "Com cinco"], answer: 1 },
+                { question: "Qual o parente mais pr&oacute;ximo que o filho da sua tia pode ser de voc&ecirc;?", options: ["Seu primo", "Seu irm&atilde;o", "Seu tio", "Seu cunhado"], answer: 0 },
+                { question: "Uma pizza foi dividida em 8 peda&ccedil;os. Se voc&ecirc; come 3 peda&ccedil;os, quantos peda&ccedil;os sobraram?", options: ["3", "4", "5", "8"], answer: 2 },
+                { question: "Se 5 pacotes de figurinhas custam R$ 10, quanto custa um pacote?", options: ["R$ 1", "R$ 2", "R$ 3", "R$ 5"], answer: 1 },
+                { question: "Tenho 3 caixas, e dentro de cada uma h&aacute; mais 2 caixas. Quantas caixas eu tenho no total?", options: ["5", "6", "9", "8"], answer: 2 },
+                { question: "Um &ocirc;nibus tem 10 passageiros. Na primeira parada, descem 4 e sobem 2. Quantas pessoas est&atilde;o no &ocirc;nibus agora?", options: ["6", "8", "10", "12"], answer: 1 },
+                { question: "Quanto &eacute; o dobro de 15 mais 5?", options: ["35", "40", "25", "50"], answer: 0 },
+                { question: "Se voc&ecirc; tem R$ 20 e gasta R$ 12, com quanto voc&ecirc; fica?", options: ["R$ 8", "R$ 10", "R$ 12", "R$ 32"], answer: 0 },
+                { question: "Qual &eacute; o pr&oacute;ximo n&uacute;mero na sequ&ecirc;ncia: 5, 10, 15, 20, ...?", options: ["22", "25", "30", "40"], answer: 1 },
+                { question: "Uma galinha bota 1 ovo por dia. Quantos ovos ela bota em uma semana?", options: ["1", "5", "7", "10"], answer: 2 },
+                { question: "O que entra na &aacute;gua, mas n&atilde;o se molha?", options: ["A luz do sol", "Uma pedra", "Um peixe", "Um barco"], answer: 0 },
+                { question: "Se 5 gatos pegam 5 ratos em 5 minutos, em quanto tempo 1 gato pega 1 rato?", options: ["1 minuto", "5 minutos", "10 minutos", "25 minutos"], answer: 1 },
+                { question: "Se eu tenho 5 p&aacute;ssaros em um galho e dou um tiro em um deles, quantos p&aacute;ssaros ficam no galho?", options: ["4 p&aacute;ssaros", "5 p&aacute;ssaros", "Nenhum", "1 p&aacute;ssaro"], answer: 2 },
+                { question: "Se um filme come&ccedil;a &agrave;s 14h e tem dura&ccedil;&atilde;o de 90 minutos, a que horas ele termina?", options: ["15h", "15h30", "16h", "16h30"], answer: 1 },
+                { question: "Abri um livro e a soma dos n&uacute;meros das duas p&aacute;ginas que eu vejo &eacute; 21. Quais s&atilde;o os n&uacute;meros das p&aacute;ginas?", options: ["P&aacute;gina 1 e p&aacute;gina 20", "P&aacute;gina 10 e p&aacute;gina 11", "P&aacute;gina 9 e p&aacute;gina 12", "P&aacute;gina 7 e p&aacute;gina 14"], answer: 1 },
+                { question: "Divida 50 por meio e some 20. Qual &eacute; o resultado final?", options: ["45", "120", "30", "55"], answer: 1 },
+                { question: "O que pesa mais: 1 quilo de algod&atilde;o ou 1 quilo de chumbo?", options: ["O chumbo", "O algod&atilde;o", "Pesam a mesma coisa", "Depende da balan&ccedil;a"], answer: 2 },
+                { question: "Em uma corrida de carros, se voc&ecirc; ultrapassa o &uacute;ltimo colocado, em que posi&ccedil;&atilde;o voc&ecirc; fica?", options: ["Pen&uacute;ltimo", "Antepen&uacute;ltimo", "&Uacute;ltimo", "&Eacute; imposs&iacute;vel ultrapassar o &uacute;ltimo"], answer: 3 },
+                { question: "Se voc&ecirc; tem uma d&uacute;zia de ovos e quebra 2, cozinha 2 e come 2, quantos ovos sobram?", options: ["6 ovos", "10 ovos", "8 ovos", "Nenhum"], answer: 1 },
+                { question: "Um trem parte de S&atilde;o Paulo para o Rio de Janeiro com 100 passageiros. Em uma parada, 10 pessoas descem. Na parada seguinte, 5 pessoas sobem. Quantas pessoas est&atilde;o no trem agora?", options: ["95 pessoas", "105 pessoas", "90 pessoas", "N&atilde;o d&aacute; para saber, a pergunta n&atilde;o diz o nome do maquinista."], answer: 0 },
+                { question: "Se uma vela leva 3 horas para queimar completamente, quanto tempo 3 velas id&ecirc;nticas, acesas ao mesmo tempo, levar&atilde;o para queimar?", options: ["9 horas", "6 horas", "3 horas", "1 hora"], answer: 2 },
+                { question: "Qual o pr&oacute;ximo n&uacute;mero da sequ&ecirc;ncia: 10, 8, 6, 4, ...?", options: ["0", "2", "3", "1"], answer: 1 },
+                { question: "O que &eacute; que tem dentes, mas n&atilde;o pode comer?", options: ["Um alho", "Um pente", "Um cachorro sem fome", "Uma serra"], answer: 1 },
+                { question: "Se o filho de Jo&atilde;o &eacute; o pai do meu filho, o que eu sou de Jo&atilde;o?", options: ["Av&ocirc;", "Neto", "Filho ou Nora", "Pai"], answer: 2 },
+                { question: "Quantos animais de cada esp&eacute;cie Mois&eacute;s colocou na arca?", options: ["Dois", "Um", "Sete", "Nenhum, a arca era de No&eacute;"], answer: 3 },
+                { question: "Se hoje &eacute; quarta-feira, que dia da semana ser&aacute; daqui a 4 dias?", options: ["S&aacute;bado", "Domingo", "Segunda-feira", "Sexta-feira"], answer: 1 },
+                { question: "Qual pesa mais: um quilo de ferro ou um litro de &aacute;gua?", options: ["O ferro", "A &aacute;gua", "Pesam a mesma coisa", "A pergunta n&atilde;o faz sentido"], answer: 2 },
+                { question: "Um homem construiu uma casa com quatro paredes, todas viradas para o Sul. Um urso se aproximou da casa. Qual era a cor do urso?", options: ["Marrom", "Preto", "Branco", "N&atilde;o d&aacute; para saber"], answer: 2 },
+            ],
+            intermediario: [
+                { question: "Se eu tinha 6 anos quando minha irm&atilde; nasceu, e hoje eu tenho 40 anos, qual a idade dela?", options: ["20 anos", "34 anos", "36 anos", "46 anos"], answer: 1 },
+                { question: "Um carro faz uma viagem de ida a 50 km/h e a volta, pelo mesmo caminho, a 100 km/h. Qual foi a velocidade m&eacute;dia do carro no percurso total?", options: ["75 km/h", "66,6 km/h", "80 km/h", "70 km/h"], answer: 1 },
+                { question: "Uma pessoa comprou um item por R$ 60, vendeu por R$ 70, comprou de volta por R$ 80 e vendeu novamente por R$ 90. Qual foi o resultado financeiro final dela?", options: ["Teve R$ 20 de lucro", "Teve R$ 10 de preju&iacute;zo", "N&atilde;o teve lucro nem preju&iacute;zo", "Teve R$ 30 de lucro"], answer: 0 },
+                { question: "Um rel&oacute;gio atrasa 4 minutos a cada hora. Se ele foi acertado &agrave;s 8h da manh&atilde;, que horas ele estar&aacute; marcando &agrave;s 13h do mesmo dia?", options: ["12h40", "12h56", "12h48", "13h20"], answer: 0 },
+                { question: "Voc&ecirc; est&aacute; em uma sala com 4 cantos. Em cada canto h&aacute; um gato, e na frente de cada gato h&aacute; outros 3 gatos. Quantos gatos h&aacute; na sala no total?", options: ["16 gatos", "13 gatos", "7 gatos", "4 gatos"], answer: 3 },
+                { question: "Se voc&ecirc; est&aacute; em um pr&eacute;dio e entra no elevador no 5&ordm; andar, sobe 6 andares, desce 9 e sobe mais 4, em qual andar voc&ecirc; est&aacute; agora?", options: ["No 5&ordm; andar", "No 6&ordm; andar", "No 8&ordm; andar", "No 10&ordm; andar"], answer: 1 },
+                { question: "Dois amigos est&atilde;o em pontos opostos de uma estrada de 30 km. Eles come&ccedil;am a caminhar um em dire&ccedil;&atilde;o ao outro, ambos a uma velocidade de 5 km/h. Em quanto tempo eles v&atilde;o se encontrar?", options: ["6 horas", "5 horas", "3 horas", "2 horas"], answer: 2 },
+                { question: "Ana, Bia e Carla est&atilde;o em uma fila. Ana n&atilde;o &eacute; a primeira. Carla est&aacute; imediatamente atr&aacute;s de Bia. Bia n&atilde;o &eacute; a &uacute;ltima. Qual &eacute; a ordem da fila, da primeira para a &uacute;ltima?", options: ["Ana, Bia, Carla", "Bia, Carla, Ana", "Bia, Ana, Carla", "Carla, Bia, Ana"], answer: 1 },
+                { question: "Se 4 m&aacute;quinas produzem 4 pe&ccedil;as em 4 minutos, em quanto tempo 20 m&aacute;quinas produzir&atilde;o 20 pe&ccedil;as?", options: ["20 minutos", "100 minutos", "4 minutos", "80 minutos"], answer: 2 },
+                { question: "Quantas vezes o algarismo '9' aparece quando voc&ecirc; escreve todos os n&uacute;meros de 1 a 100?", options: ["10", "11", "19", "20"], answer: 3 },
+                { question: "Em um quintal com galinhas e coelhos, h&aacute; um total de 10 cabe&ccedil;as e 28 p&eacute;s. Quantas galinhas h&aacute; no quintal?", options: ["4 galinhas", "5 galinhas", "6 galinhas", "7 galinhas"], answer: 2 },
+                { question: "Um produto custava R$ 200. Teve um aumento de 10% e, na semana seguinte, um desconto de 10% sobre o novo pre&ccedil;o. Qual o pre&ccedil;o final?", options: ["R$ 200", "R$ 198", "R$ 210", "R$ 180"], answer: 1 },
+                { question: "O quinto dia de um m&ecirc;s caiu em uma ter&ccedil;a-feira. Em que dia da semana cair&aacute; o 25&ordm; dia desse mesmo m&ecirc;s?", options: ["Segunda-feira", "Ter&ccedil;a-feira", "Quarta-feira", "S&aacute;bado"], answer: 0 },
+                { question: "O irm&atilde;o do meu tio n&atilde;o &eacute; meu tio. Assumindo que n&atilde;o h&aacute; la&ccedil;os de casamento envolvidos, quem &eacute; essa pessoa?", options: ["Meu primo", "Meu av&ocirc;", "Meu pai", "Eu mesmo"], answer: 2 },
+                { question: "Gastei 1/4 do meu dinheiro com um lanche e depois gastei 1/3 do que restou com um ingresso de cinema. Se ainda me sobraram R$ 100, quanto dinheiro eu tinha no in&iacute;cio?", options: ["R$ 150", "R$ 200", "R$ 250", "R$ 300"], answer: 1 },
+                { question: "Se 3 impressoras imprimem 300 p&aacute;ginas em 3 minutos, em quanto tempo 1 impressora imprime 100 p&aacute;ginas?", options: ["1 minuto", "3 minutos", "9 minutos", "100 minutos"], answer: 1 },
+                { question: "Um trem viaja por 2 horas a 60 km/h e depois por mais 3 horas a 40 km/h. Qual a dist&acirc;ncia total percorrida pelo trem?", options: ["100 km", "200 km", "240 km", "300 km"], answer: 2 },
+                { question: "Para serrar um tronco de &aacute;rvore em 8 peda&ccedil;os, quantos cortes retos eu preciso fazer?", options: ["8 cortes", "4 cortes", "7 cortes", "9 cortes"], answer: 2 },
+                { question: "Um tijolo pesa 2 kg mais meio tijolo. Quanto pesam dois tijolos?", options: ["4 kg", "6 kg", "8 kg", "3 kg"], answer: 2 },
+                { question: "Em uma gaveta, h&aacute; 10 meias brancas e 10 meias pretas. No escuro, quantas meias voc&ecirc; precisa tirar, no m&iacute;nimo, para garantir um par da mesma cor?", options: ["2", "3", "11", "20"], answer: 1 },
+                { question: "Um carro viaja a 90 km/h. Quantos metros ele percorre em 10 segundos?", options: ["900 metros", "250 metros", "90 metros", "1500 metros"], answer: 1 },
+                { question: "Se um livro custa R$ 10 mais metade de seu pre&ccedil;o, quanto custa o livro?", options: ["R$ 15", "R$ 20", "R$ 25", "R$ 30"], answer: 1 },
+                { question: "Em uma fazenda com vacas e galinhas, h&aacute; 20 cabe&ccedil;as e 56 pernas. Quantas vacas h&aacute; na fazenda?", options: ["6 vacas", "8 vacas", "10 vacas", "12 vacas"], answer: 1 },
+                { question: "Um produto teve seu pre&ccedil;o aumentado em 50%. Para que ele volte ao pre&ccedil;o original, qual deve ser o percentual de desconto?", options: ["50%", "100%", "33,3%", "25%"], answer: 2 },
+                { question: "Voc&ecirc; come&ccedil;a em um ponto virado para o Norte. Anda 10 metros, vira &agrave; direita, anda 5 metros, vira &agrave; direita de novo e anda 10 metros. Em que dire&ccedil;&atilde;o voc&ecirc; est&aacute; virado agora?", options: ["Norte", "Sul", "Leste", "Oeste"], answer: 1 },
+                { question: "Qual &eacute; a soma dos n&uacute;meros de 1 a 20?", options: ["200", "210", "190", "205"], answer: 1 },
+                { question: "Qual &eacute; o pr&oacute;ximo item da sequ&ecirc;ncia: J, F, M, A, M, J, J, ...?", options: ["A", "S", "O", "N"], answer: 0 },
+                { question: "Se voc&ecirc; tem 4 caixas e em cada uma h&aacute; 4 caixas menores, e dentro de cada caixa menor h&aacute; 4 bombons, quantos bombons h&aacute; no total?", options: ["16", "24", "64", "80"], answer: 2 },
+                { question: "Qual o resultado da express&atilde;o: 5 + 5 x 5 - 5?", options: ["45", "25", "50", "0"], answer: 1 },
+            ],
+            intermediario_dificil: [
+                { question: "Um carro sobe uma montanha a 30 km/h e desce pelo mesmo caminho a 90 km/h. Qual a velocidade m&eacute;dia do carro no percurso total?", options: ["60 km/h", "50 km/h", "45 km/h", "120 km/h"], answer: 2 },
+                { question: "Uma piscina tem duas torneiras. Uma a enche em 4 horas, a outra em 12 horas. Se as duas forem abertas ao mesmo tempo, em quanto tempo a piscina ficar&aacute; cheia?", options: ["8 horas", "6 horas", "4 horas", "3 horas"], answer: 3 },
+                { question: "Um produto custa R$ 100. Seu pre&ccedil;o aumenta em 30% e, sobre este novo valor, &eacute; aplicado um desconto de 30%. Qual o pre&ccedil;o final?", options: ["R$ 100,00", "R$ 91,00", "R$ 70,00", "R$ 99,00"], answer: 1 },
+                { question: "Um caracol est&aacute; no fundo de um po&ccedil;o de 20 metros. De dia, ele sobe 5 metros, mas &agrave; noite, escorrega 4 metros. Em quantos dias ele sair&aacute; do po&ccedil;o?", options: ["20 dias", "16 dias", "15 dias", "19 dias"], answer: 1 },
+                { question: "Se voc&ecirc; tem 9 moedas, mas uma delas &eacute; falsa e mais leve, qual o n&uacute;mero m&iacute;nimo de pesagens em uma balan&ccedil;a de dois pratos para descobrir a moeda falsa?", options: ["1 pesagem", "2 pesagens", "3 pesagens", "4 pesagens"], answer: 1 },
+                { question: "Em um quintal com galinhas e porcos, h&aacute; um total de 14 cabe&ccedil;as e 40 p&eacute;s. Quantos porcos h&aacute; no quintal?", options: ["6 porcos", "7 porcos", "8 porcos", "10 porcos"], answer: 0 },
+                { question: "Se 8 homens constroem 8 casas em 8 meses, em quantos meses 4 homens constroem 4 casas?", options: ["2 meses", "4 meses", "8 meses", "16 meses"], answer: 2 },
+                { question: "Um homem olha para um retrato e diz: 'Eu n&atilde;o tenho irm&atilde;os nem irm&atilde;s, mas o pai deste homem &eacute; filho do meu pai'. De quem &eacute; o retrato?", options: ["Dele mesmo", "Do seu pai", "Do seu filho", "Do seu tio"], answer: 2 },
+                { question: "A soma das idades de um pai e seu filho &eacute; 50 anos. H&aacute; 5 anos, a idade do pai era 9 vezes a idade do filho. Qual &eacute; a idade atual do pai?", options: ["40 anos", "41 anos", "45 anos", "36 anos"], answer: 1 },
+                { question: "Tr&ecirc;s amigos dividem uma conta de R$ 30... Onde est&aacute; o R$ 1 que falta?", options: ["No caixa do restaurante", "Com o terceiro amigo", "A l&oacute;gica est&aacute; errada, os R$ 2 do gar&ccedil;om j&aacute; est&atilde;o inclu&iacute;dos nos R$ 27", "O gerente calculou mal o troco"], answer: 2 },
+                { question: "Numa gaveta h&aacute; 10 meias azuis, 10 verdes e 10 vermelhas. No escuro total, quantas meias voc&ecirc; precisa tirar, no m&iacute;nimo, para garantir que tem um par da mesma cor?", options: ["2", "3", "4", "11"], answer: 2 },
+                { question: "Um homem que mora no 20&ordm; andar... sobe at&eacute; o 15&ordm; andar e vai o resto de escada. Por qu&ecirc;?", options: ["Para fazer exerc&iacute;cio", "O elevador est&aacute; quebrado acima do 15&ordm; andar", "Ele &eacute; uma pessoa de baixa estatura e n&atilde;o alcan&ccedil;a os bot&otilde;es mais altos", "&Eacute; uma promessa"], answer: 2 },
+                { question: "Uma pessoa gasta 1/3 do seu sal&aacute;rio com aluguel e 50% do que resta com outras despesas. Se ainda lhe sobram R$ 1.200, qual &eacute; o seu sal&aacute;rio total?", options: ["R$ 3.600", "R$ 4.800", "R$ 6.000", "R$ 2.400"], answer: 0 },
+                { question: "Voc&ecirc; tem 3 caixas com etiquetas (Bananas, Ma&ccedil;&atilde;s, Misto) e sabe que TODAS as etiquetas est&atilde;o erradas. Qual o n&uacute;mero m&iacute;nimo de frutas que voc&ecirc; precisa tirar... para corrigir todas as etiquetas?", options: ["Uma fruta, de qualquer caixa", "Duas frutas, da caixa 'Misto'", "Uma fruta, da caixa 'Misto'", "&Eacute; imposs&iacute;vel fazer isso"], answer: 2 },
+                { question: "Uma tra&ccedil;a come o livro em linha reta, da primeira p&aacute;gina do Volume 1 at&eacute; a &uacute;ltima p&aacute;gina do Volume 2. Se cada capa tem 1mm e as p&aacute;ginas de cada volume t&ecirc;m 30mm, qual dist&acirc;ncia a tra&ccedil;a percorreu?", options: ["62 mm", "60 mm", "32 mm", "2 mm"], answer: 3 },
+                { question: "Um homem tem tr&ecirc;s filhos. O produto das idades deles &eacute; 36... 'O meu filho mais velho toca viol&atilde;o'. Quais s&atilde;o as idades?", options: ["6, 6, 1", "9, 2, 2", "36, 1, 1", "4, 3, 3"], answer: 1 },
+                { question: "O que &eacute; que aparece no meio do m&ecirc;s, no come&ccedil;o da semana, mas no final do dia?", options: ["A letra E", "A letra M", "O n&uacute;mero 15", "A Lua"], answer: 0 },
+                { question: "Como saber qual interruptor acende a l&acirc;mpada, podendo entrar na sala apenas uma vez?", options: ["Ligo um interruptor, espero um minuto, desligo. Ligo outro e entro na sala.", "Testo um de cada vez, entrando na sala ap&oacute;s cada teste", "&Eacute; imposs&iacute;vel saber com certeza", "Ligo dois interruptores ao mesmo tempo"], answer: 0 },
+                { question: "Se Ana corre mais r&aacute;pido que Bia, e Bia corre mais r&aacute;pido que Carla, qual a conclus&atilde;o l&oacute;gica?", options: ["Ana e Carla correm na mesma velocidade", "Ana corre mais r&aacute;pido que Carla", "Carla corre mais r&aacute;pido que Ana", "N&atilde;o h&aacute; como saber"], answer: 1 },
+                { question: "Um homem empurra seu carro at&eacute; parar em frente a um hotel e, nesse momento, grita: 'Estou falido!'. Como ele soube?", options: ["Ele recebeu uma mensagem do banco", "Ele bateu o carro no hotel e n&atilde;o tinha seguro", "Ele estava jogando Banco Imobili&aacute;rio (Monopoly)", "O manobrista do hotel informou o pre&ccedil;o da di&aacute;ria"], answer: 2 },
+                { question: "Se um tijolo &eacute; igual a um quilo mais meio tijolo, qual o peso de um tijolo?", options: ["1 kg", "1,5 kg", "2 kg", "N&atilde;o &eacute; poss&iacute;vel determinar"], answer: 2 },
+                { question: "Qual o pr&oacute;ximo n&uacute;mero da sequ&ecirc;ncia: 1, 4, 9, 16, 25, 36, ...?", options: ["42", "49", "50", "64"], answer: 1 },
+                { question: "Uma mulher rouba uma nota de R$ 100... compra um produto de R$ 70... Qual foi o preju&iacute;zo total da loja?", options: ["R$ 30", "R$ 70", "R$ 100", "R$ 130"], answer: 2 },
+                { question: "Quantas vezes o algarismo '7' aparece na contagem de 1 a 100?", options: ["10", "11", "19", "20"], answer: 3 },
+                { question: "Se s&atilde;o necess&aacute;rios 8 homens para cavar 8 buracos em 8 dias, quantos dias um homem levar&aacute; para cavar meio buraco?", options: ["4 dias", "1 dia", "8 dias", "N&atilde;o se pode cavar 'meio buraco'"], answer: 3 },
+                { question: "Quatro pessoas precisam atravessar uma ponte escura em 17 minutos... Qual &eacute; a estrat&eacute;gia?", options: ["A e B v&atilde;o, A volta. A e C v&atilde;o, A volta. A e D v&atilde;o.", "A e B v&atilde;o, A volta. C e D v&atilde;o, B volta. A e B v&atilde;o.", "D e C v&atilde;o, C volta. B e C v&atilde;o, B volta. A e B v&atilde;o.", "&Eacute; imposs&iacute;vel atravessar em 17 minutos."], answer: 1 },
+                { question: "Eu tenho o dobro da idade que voc&ecirc; tinha quando eu tinha a sua idade. Quando voc&ecirc; tiver a minha idade, a soma das nossas idades ser&aacute; 63. Qual a minha idade hoje?", options: ["24", "28", "32", "36"], answer: 1 },
+                { question: "Numa sala com 8 pessoas, se todas apertarem as m&atilde;os umas das outras uma vez, quantos apertos de m&atilde;o ocorrer&atilde;o?", options: ["16", "28", "56", "64"], answer: 1 },
+                { question: "Se uma torneira enche um tanque em 3 horas e outra torneira o enche em 6 horas, quanto tempo as duas juntas levar&atilde;o para encher o tanque?", options: ["9 horas", "4 horas e 30 minutos", "2 horas", "1 hora e 30 minutos"], answer: 2 },
+                { question: "Voc&ecirc; gasta 1/3 do seu sal&aacute;rio com moradia e 1/4 do que sobra com alimenta&ccedil;&atilde;o. Se lhe restam R$ 900, qual &eacute; o seu sal&aacute;rio?", options: ["R$ 1.200", "R$ 1.500", "R$ 1.800", "R$ 2.400"], answer: 2 },
+                { question: "Em uma classe de 40 alunos, 25 gostam de matem&aacute;tica, 20 gostam de hist&oacute;ria e 10 gostam de ambas. Quantos alunos n&atilde;o gostam de nenhuma das duas mat&eacute;rias?", options: ["0", "5", "10", "15"], answer: 1 },
+                { question: "Quantas vezes o algarismo '3' aparece nos n&uacute;meros de 1 a 100?", options: ["10", "11", "19", "20"], answer: 3 },
+                { question: "Se voc&ecirc; est&aacute; em um pr&eacute;dio no 10&ordm; andar e desce 12 andares, sobe 5 e desce 2, em qual andar voc&ecirc; est&aacute;?", options: ["T&eacute;rreo", "1&ordm; Subsolo", "2&ordm; Subsolo", "Garagem"], answer: 0 },
+                { question: "Dois carros saem de cidades a 450 km de dist&acirc;ncia e dirigem um em dire&ccedil;&atilde;o ao outro. Um carro viaja a 100 km/h e o outro a 125 km/h. Em quanto tempo eles se encontrar&atilde;o?", options: ["1 hora", "1 hora e 30 minutos", "2 horas", "2 horas e 30 minutos"], answer: 2 },
+                { question: "Um item custa R$ 160. Se voc&ecirc; quer vend&ecirc;-lo com um lucro de 20% sobre o pre&ccedil;o de venda, por quanto deve vend&ecirc;-lo?", options: ["R$ 192", "R$ 180", "R$ 200", "R$ 220"], answer: 2 },
+                { question: "Se o dia depois de amanh&atilde; &eacute; o dia antes de segunda-feira, que dia &eacute; hoje?", options: ["Quinta-feira", "Sexta-feira", "S&aacute;bado", "Domingo"], answer: 1 },
+                { question: "Voc&ecirc; precisa atravessar um rio com uma raposa, uma galinha e um saco de gr&atilde;os. O barco s&oacute; leva voc&ecirc; e mais um item. A raposa n&atilde;o pode ficar com a galinha, nem a galinha com os gr&atilde;os. Qual &eacute; o item que voc&ecirc; deve levar na primeira viagem de volta (do outro lado para o lado inicial)?", options: ["A raposa", "A galinha", "Os gr&atilde;os", "Voltar sozinho"], answer: 1 },
+            ],
+            dificil: [
+                { question: "Voc&ecirc; e seu amigo pintam uma sala. Sozinho, voc&ecirc; levaria 3 horas. Seu amigo, sozinho, levaria 6 horas. Se voc&ecirc;s dois trabalharem juntos, em quanto tempo a sala ficar&aacute; pronta?", options: ["4 horas e 30 minutos", "4 horas", "2 horas e 30 minutos", "2 horas"], answer: 3 },
+                { question: "Um produto custava R$ 500,00. No primeiro m&ecirc;s, seu pre&ccedil;o subiu 10%. No segundo m&ecirc;s, o novo pre&ccedil;o caiu 10%. Qual &eacute; o pre&ccedil;o final do produto?", options: ["R$ 500,00", "R$ 495,00", "R$ 490,00", "R$ 505,00"], answer: 1 },
+                { question: "Em uma reuni&atilde;o de neg&oacute;cios com 10 pessoas, todos se cumprimentam com um &uacute;nico aperto de m&atilde;o. Quantos apertos de m&atilde;o ocorreram no total?", options: ["100", "90", "50", "45"], answer: 3 },
+                { question: "Qual promo&ccedil;&atilde;o oferece o maior desconto por barra de chocolate: 'Leve 3, Pague 2' ou '50% de desconto na segunda unidade'?", options: ["Leve 3, Pague 2", "50% de desconto na segunda unidade", "Ambas d&atilde;o o mesmo desconto por barra", "Depende da quantidade que voc&ecirc; compra"], answer: 0 },
+                { question: "Seu irm&atilde;o sai de casa &agrave;s 8:30, correndo a 8 km/h para te alcan&ccedil;ar, que saiu &agrave;s 8:00 a 4 km/h. A que dist&acirc;ncia de casa ele te alcan&ccedil;a?", options: ["2 km", "4 km", "6 km", "8 km"], answer: 1 },
+                { question: "Tr&ecirc;s amigos pedem uma pizza de R$ 60,00. Ana comeu 1/2, Bia 1/3 e Carla 1/6. Como eles deveriam dividir a conta de forma justa?", options: ["R$ 20,00 para cada um", "Ana paga R$ 30, Bia R$ 20 e Carla R$ 10", "Ana paga R$ 25, Bia R$ 25 e Carla R$ 10", "Ana e Bia pagam R$ 22,50 cada, e Carla R$ 15"], answer: 1 },
+                { question: "Voc&ecirc; pega um voo de S&atilde;o Paulo (fuso GMT-3) &agrave;s 22:00 de uma quinta-feira. O destino &eacute; Paris (fuso GMT+2), e a dura&ccedil;&atilde;o do voo &eacute; de 11 horas. Que dia e hora voc&ecirc; chega em Paris?", options: ["Sexta-feira, &agrave;s 9:00", "Sexta-feira, &agrave;s 14:00", "Sexta-feira, &agrave;s 4:00", "S&aacute;bado, &agrave;s 9:00"], answer: 1 },
+                { question: "O que &eacute; melhor para o seu bolso em uma compra de R$ 500: um desconto imediato de 10% ou um cashback de 15% que s&oacute; pode ser usado em uma futura compra na mesma loja?", options: ["O desconto de 10%, pois &eacute; garantido", "O cashback de 15%, pois o valor &eacute; maior", "Ambos s&atilde;o financeiramente id&ecirc;nticos", "A resposta depende se voc&ecirc; pretende voltar &agrave; loja"], answer: 3 },
+                { question: "Tenho 1 litro de suco com 20% de polpa. Quero dilu&iacute;-lo com &aacute;gua pura (0% de polpa) para que a mistura final tenha apenas 10% de polpa. Quanta &aacute;gua eu preciso adicionar?", options: ["1 litro", "500 ml", "2 litros", "200 ml"], answer: 0 },
+                { question: "Em uma corrida de cavalos, voc&ecirc; aposta em um cavalo para 'ganhar'. As chances dele s&atilde;o de 1 para 4 (1/4). Qual a probabilidade de ele N&Atilde;O ganhar?", options: ["25%", "50%", "75%", "80%"], answer: 2 },
+                { question: "Voc&ecirc; est&aacute; em uma escada rolante que est&aacute; subindo. Voc&ecirc; decide subir os degraus tamb&eacute;m e conta 30 degraus at&eacute; o topo. Seu amigo sobe pela mesma escada, mas a uma velocidade duas vezes maior que a sua, e conta 40 degraus. Se a escada estivesse parada, quantos degraus ela teria?", options: ["50 degraus", "60 degraus", "70 degraus", "120 degraus"], answer: 1 },
+                { question: "Um carro viaja a 60 km/h. O motorista v&ecirc; um obst&aacute;culo e pisa no freio. O tempo de rea&ccedil;&atilde;o dele &eacute; de 1 segundo. Qual a dist&acirc;ncia que o carro percorre ANTES de o freio come&ccedil;ar a funcionar?", options: ["Exatamente 16,7 metros", "Exatamente 60 metros", "Quase 30 metros", "A dist&acirc;ncia &eacute; zero, ele freia instantaneamente"], answer: 0 },
+                { question: "O que ocupa mais espa&ccedil;o no seu arm&aacute;rio: um quilo de chumbo ou um quilo de isopor?", options: ["O quilo de chumbo", "O quilo de isopor", "Ocupam o mesmo espa&ccedil;o, pois ambos t&ecirc;m 1kg", "Depende do formato das pe&ccedil;as"], answer: 1 },
+                { question: "Se a infla&ccedil;&atilde;o em um ano foi de 10% e no ano seguinte foi de 20%, qual foi a infla&ccedil;&atilde;o acumulada no per&iacute;odo de dois anos?", options: ["30%", "28%", "32%", "15%"], answer: 2 },
+                { question: "Voc&ecirc; precisa comprar azulejos para uma parede de 2m x 3m. O azulejo mede 20cm x 20cm. Quantos azulejos, no m&iacute;nimo, voc&ecirc; precisa comprar?", options: ["100 azulejos", "120 azulejos", "150 azulejos", "300 azulejos"], answer: 2 },
+                { question: "Em um jogo de loteria com 49 n&uacute;meros, &eacute; mais prov&aacute;vel ganhar com a sequ&ecirc;ncia '1, 2, 3, 4, 5, 6' ou com a sequ&ecirc;ncia '8, 15, 23, 27, 34, 42'?", options: ["A sequ&ecirc;ncia '8, 15, 23, 27, 34, 42', pois &eacute; mais aleat&oacute;ria", "A sequ&ecirc;ncia '1, 2, 3, 4, 5, 6', pois s&atilde;o n&uacute;meros mais baixos", "A probabilidade para qualquer sequ&ecirc;ncia espec&iacute;fica de 6 n&uacute;meros &eacute; exatamente a mesma", "&Eacute; imposs&iacute;vel ganhar com uma sequ&ecirc;ncia como '1, 2, 3, 4, 5, 6'"], answer: 2 },
+                { question: "Voc&ecirc; pega um empr&eacute;stimo de R$ 1.000,00 com juros simples de 10% ao m&ecirc;s. Todo m&ecirc;s, voc&ecirc; paga exatamente R$ 100,00. O que acontece com a sua d&iacute;vida?", options: ["Voc&ecirc; quita a d&iacute;vida em 10 meses", "Voc&ecirc; quita a d&iacute;vida em 11 meses", "Voc&ecirc; nunca quita a d&iacute;vida, ela permanece sempre em R$ 1.000,00", "A d&iacute;vida aumenta a cada m&ecirc;s"], answer: 2 },
+                { question: "Em um jogo de futebol, um jogador chuta a bola para o alto. Em qual ponto da trajet&oacute;ria (ignorando a resist&ecirc;ncia do ar) a acelera&ccedil;&atilde;o da bola &eacute; igual a zero?", options: ["No momento exato em que ela deixa o p&eacute; do jogador", "No ponto mais alto da trajet&oacute;ria, quando ela para de subir", "Em nenhum ponto da trajet&oacute;ria", "Um pouco antes de tocar o ch&atilde;o"], answer: 2 },
+                { question: "O que mostra a hora certa com mais frequ&ecirc;ncia: um rel&oacute;gio que est&aacute; completamente parado ou um rel&oacute;gio que atrasa exatamente um minuto por dia?", options: ["O rel&oacute;gio que atrasa um minuto por dia", "O rel&oacute;gio que est&aacute; parado", "Ambos mostram a hora certa com a mesma frequ&ecirc;ncia", "Nenhum deles jamais mostrar&aacute; a hora certa novamente"], answer: 1 },
+                { question: "Voc&ecirc; est&aacute; baixando um arquivo de 1 Gigabyte (GB). Sua velocidade de internet &eacute; de 100 Megabits por segundo (Mbps). Quanto tempo, aproximadamente, levar&aacute; o download? (Lembre-se: 1 Byte = 8 bits)", options: ["10 segundos", "Cerca de 1 minuto e 20 segundos", "Cerca de 10 minutos", "100 segundos"], answer: 1 },
+                { question: "Um motorista de caminh&atilde;o precisa passar por um t&uacute;nel baixo que tem exatamente 4 metros de altura. O caminh&atilde;o dele tem 4 metros e 2 cent&iacute;metros de altura, mas ele consegue passar sem danificar o caminh&atilde;o ou o t&uacute;nel. Como?", options: ["Ele acelerou muito para 'achatar' a suspens&atilde;o", "Ele esvaziou um pouco os pneus do caminh&atilde;o", "O t&uacute;nel era flex&iacute;vel", "Ele esperou a temperatura baixar para o metal do t&uacute;nel encolher"], answer: 1 },
+                { question: "Um antibi&oacute;tico elimina metade das bact&eacute;rias de uma infec&ccedil;&atilde;o a cada hora. Se &agrave;s 14:00 havia 64 milh&otilde;es de bact&eacute;rias, a que horas restar&atilde;o apenas 1 milh&atilde;o?", options: ["&Agrave;s 18:00", "&Agrave;s 19:00", "&Agrave;s 20:00", "&Agrave;s 22:00"], answer: 2 },
+                { question: "Em uma sala de reuni&otilde;es, metade das pessoas s&atilde;o gerentes. Metade das mulheres na sala s&atilde;o gerentes. Metade dos homens na sala s&atilde;o gerentes. Qual das afirma&ccedil;&otilde;es abaixo &eacute; definitivamente verdadeira?", options: ["O n&uacute;mero de homens e mulheres na sala &eacute; igual", "O n&uacute;mero de gerentes homens &eacute; igual ao de gerentes mulheres", "Todos os gerentes s&atilde;o homens ou todos s&atilde;o mulheres", "O n&uacute;mero de mulheres n&atilde;o-gerentes &eacute; igual ao n&uacute;mero de homens n&atilde;o-gerentes"], answer: 0 },
+                { question: "Em uma ilha, todos os habitantes s&atilde;o ou Cavaleiros (sempre falam a verdade) ou Valetes (sempre mentem). Voc&ecirc; encontra tr&ecirc;s habitantes, A, B e C. 'A' diz: 'B &eacute; um Valete'. 'B' diz: 'A e C s&atilde;o do mesmo tipo'. Quem &eacute; C?", options: ["Cavaleiro", "Valete", "N&atilde;o &eacute; poss&iacute;vel determinar", "Metade Cavaleiro, metade Valete"], answer: 1 },
+                { question: "Qual a probabilidade de, em um grupo de 23 pessoas escolhidas ao acaso, pelo menos duas delas fazerem anivers&aacute;rio no mesmo dia?", options: ["Cerca de 2%", "Exatamente 50%", "Um pouco mais de 50%", "Cerca de 23%"], answer: 2 },
+                { question: "Um carro sobe uma montanha a 40 km/h e desce pelo mesmo caminho a 120 km/h. Qual a velocidade m&eacute;dia do carro no percurso total?", options: ["80 km/h", "60 km/h", "70 km/h", "90 km/h"], answer: 1 },
+                { question: "Se um tijolo se equilibra com 3/4 de um tijolo e mais um peso de 3/4 de um quilo, quanto pesa um tijolo?", options: ["1 kg", "2 kg", "3 kg", "4 kg"], answer: 2 },
+                { question: "A cirurgi&atilde;-chefe de um hospital se recusa a operar um menino, dizendo: 'Eu n&atilde;o posso operar este menino. Ele &eacute; meu filho!'. O pai do menino estava no carro com ele e morreu no acidente. Como isso &eacute; poss&iacute;vel?", options: ["O pai que morreu era adotivo", "A cirurgi&atilde; &eacute; a m&atilde;e do menino", "O menino tem dois pais", "&Eacute; um fantasma"], answer: 1 },
+                { question: "Um homem empurra seu carro at&eacute; um hotel e, ao chegar, percebe que est&aacute; falido. Como ele soube?", options: ["O conserto do carro era caro", "Ele estava jogando Banco Imobili&aacute;rio (Monopoly)", "Ele perdeu a carteira no caminho", "O hotel era muito caro"], answer: 1 },
+                { question: "Um prisioneiro recebe do rei uma chance de liberdade. Ele deve escolher entre duas portas: uma leva &agrave; liberdade, a outra &agrave; forca. Em cada porta h&aacute; um guarda. Um sempre fala a verdade, o outro sempre mente. O prisioneiro pode fazer uma &uacute;nica pergunta a um dos guardas. Que pergunta ele faz para garantir sua liberdade?", options: ["'Qual porta leva &agrave; liberdade?'", "'Voc&ecirc; &eacute; o guarda que fala a verdade?'", "'Qual porta o outro guarda me diria que leva &agrave; liberdade?'", "'A porta que voc&ecirc; guarda &eacute; a da forca?'"], answer: 2 },
+                { question: "Voc&ecirc; tem 9 moedas, mas uma delas &eacute; falsa e mais pesada. Qual o n&uacute;mero m&iacute;nimo de pesagens em uma balan&ccedil;a de dois pratos para descobrir a moeda falsa?", options: ["1", "2", "3", "4"], answer: 1 },
+                { question: "Se um homem est&aacute; em um quarto trancado por dentro e &eacute; encontrado enforcado, com uma po&ccedil;a d'&aacute;gua embaixo dele, como ele cometeu suic&iacute;dio?", options: ["Ele subiu em um bloco de gelo", "Ele usou um sistema de cordas", "Algu&eacute;m o matou e forjou a cena", "Ele inundou o quarto e depois esvaziou"], answer: 0 },
+                { question: "Dois pais e dois filhos foram pescar. Eles pegaram 3 peixes, e cada um levou um peixe para casa. Como isso foi poss&iacute;vel?", options: ["Um peixe foi dividido", "Eram apenas 3 pessoas (av&ocirc;, pai e filho)", "Um deles n&atilde;o quis peixe", "Eles pescaram mais um peixe depois"], answer: 1 },
+                { question: "Voc&ecirc; est&aacute; em um programa de TV diante de 3 portas. Atr&aacute;s de uma h&aacute; um carro e, atr&aacute;s das outras duas, bodes. Voc&ecirc; escolhe a Porta 1. O apresentador, que sabe onde o carro est&aacute;, abre a Porta 3, revelando um bode, e lhe oferece a chance de trocar para a Porta 2. Para maximizar sua chance de ganhar o carro, o que voc&ecirc; deve fazer?", options: ["Trocar para a Porta 2", "Ficar com a Porta 1", "Tanto faz, a chance &eacute; 50/50", "Pedir para abrir a outra porta"], answer: 0 },
+                { question: "Voc&ecirc; tem 12 moedas, uma delas &eacute; falsa (pode ser mais leve ou mais pesada). Qual o n&uacute;mero m&iacute;nimo de pesagens em uma balan&ccedil;a de dois pratos para achar a falsa e saber se ela &eacute; mais leve ou mais pesada?", options: ["2", "3", "4", "5"], answer: 1 },
+                { question: "Em uma ilha, 100 habitantes de olhos azuis s&atilde;o prisioneiros. A regra &eacute;: quem descobre a cor dos pr&oacute;prios olhos parte na manh&atilde; seguinte. Um dia, um visitante diz em voz alta: 'Pelo menos um de voc&ecirc;s tem olhos azuis'. O que acontece?", options: ["Nada, pois todos j&aacute; sabiam disso", "Uma pessoa vai embora no dia seguinte", "Todas as 100 pessoas v&atilde;o embora no 100&ordm; dia", "&Eacute; imposs&iacute;vel saber"], answer: 2 },
+                { question: "Um rei informa a um prisioneiro que ele ser&aacute; executado em um dia surpresa na pr&oacute;xima semana. O prisioneiro raciocina que, se ele n&atilde;o for executado at&eacute; a quinta-feira, saber&aacute; que ser&aacute; na sexta, ent&atilde;o n&atilde;o ser&aacute; surpresa. Eliminando a sexta, ele elimina a quinta, e assim por diante, concluindo que n&atilde;o pode ser executado. O que acontece?", options: ["O prisioneiro est&aacute; certo e n&atilde;o &eacute; executado", "O rei o executa na quarta-feira, o que &eacute; uma surpresa", "A l&oacute;gica do prisioneiro &eacute; um paradoxo que n&atilde;o se aplica &agrave; realidade", "O rei desiste da execu&ccedil;&atilde;o"], answer: 1 },
+                { question: "5 piratas dividem 100 moedas de ouro. O mais antigo (P1) prop&otilde;e uma divis&atilde;o. Se 50% ou mais votarem a favor, a divis&atilde;o &eacute; aceita. Se n&atilde;o, P1 &eacute; jogado ao mar e o processo recome&ccedil;a com P2. Qual proposta P1 faz para sobreviver e maximizar seu lucro?", options: ["20 para cada", "100 para ele", "98 para ele, 1 para P3, 1 para P5", "99 para ele, 1 para P4"], answer: 2 },
+                { question: "Um homem diz a um amigo: 'Eu tenho tr&ecirc;s filhos. O produto de suas idades &eacute; 36. A soma de suas idades &eacute; o n&uacute;mero da casa em frente'. O amigo olha a casa e diz: 'Ainda n&atilde;o sei'. O homem ent&atilde;o diz: 'O mais velho toca piano'. O amigo ent&atilde;o descobre as idades. Quais s&atilde;o?", options: ["6, 6, 1", "9, 2, 2", "18, 2, 1", "36, 1, 1"], answer: 1 },
+                { question: "Voc&ecirc; tem dois fus&iacute;veis que queimam em 1 hora cada, mas de forma irregular. Como voc&ecirc; mede exatamente 45 minutos?", options: ["Acende um e, quando ele estiver na metade, acende o outro", "Acende um fus&iacute;vel nas duas pontas e, ao mesmo tempo, o outro em uma ponta. Quando o primeiro queimar, acende a outra ponta do segundo.", "Corta um dos fus&iacute;veis em 3/4", "&Eacute; imposs&iacute;vel"], answer: 1 },
+                { question: "Voc&ecirc; tem um copo com &aacute;gua e outro com vinho. Voc&ecirc; pega uma colher de vinho, coloca na &aacute;gua, mistura, e depois pega uma colher da mistura e coloca de volta no vinho. No final, h&aacute; mais &aacute;gua no vinho ou mais vinho na &aacute;gua?", options: ["Mais &aacute;gua no vinho", "Mais vinho na &aacute;gua", "As quantidades s&atilde;o exatamente as mesmas", "Depende da quantidade de l&iacute;quido na colher"], answer: 2 },
+                { question: "Um livro tem dois volumes em uma estante, na ordem correta. Uma tra&ccedil;a come em linha reta da primeira p&aacute;gina do volume 1 at&eacute; a &uacute;ltima p&aacute;gina do volume 2. Se cada capa tem 2mm e as p&aacute;ginas de cada volume t&ecirc;m 25mm, que dist&acirc;ncia a tra&ccedil;a percorreu?", options: ["54 mm", "50 mm", "4 mm", "29 mm"], answer: 2 },
+                { question: "Um homem est&aacute; em uma sala com dois guardas. Um sempre mente, o outro sempre fala a verdade. Ele n&atilde;o sabe quem &eacute; quem. Ele pode fazer uma pergunta sim/n&atilde;o a um dos guardas para descobrir a porta da liberdade. Ele pergunta a um guarda: 'A porta que voc&ecirc; me indicaria como sendo a da liberdade &eacute; de fato a porta da liberdade?'. Se o guarda responder 'sim', o que ele deve fazer?", options: ["Entrar na porta indicada", "Entrar na outra porta", "A pergunta n&atilde;o funciona", "Perguntar ao outro guarda"], answer: 0 },
+            ]
+        };
+
+        // --- L&Oacute;GICA DO JOGO ---
+
+        const startScreen = document.getElementById('start-screen');
+        const gameScreen = document.getElementById('game-screen');
+        const endScreen = document.getElementById('end-screen');
+        const continueModal = document.getElementById('continue-modal');
+        
+        const startBtn = document.getElementById('start-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const continueBtn = document.getElementById('continue-btn');
+        const stopGameBtn = document.getElementById('stop-game-btn');
+        
+        const swapBtn = document.getElementById('swap-btn');
+        const bombBtn = document.getElementById('bomb-btn');
+
+        const questionNumberEl = document.getElementById('question-number');
+        const questionTextEl = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+
+        const endTitleEl = document.getElementById('end-title');
+        const endMessageEl = document.getElementById('end-message');
+
+        let gameState = {};
+        
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        function selectGameQuestions() {
+            const selected = [];
+            const usedQuestions = new Set();
+
+            const addQuestionFromLevel = (level, count) => {
+                const shuffledLevel = shuffleArray([...questions[level]]);
+                let addedCount = 0;
+                for (const q of shuffledLevel) {
+                    const qString = JSON.stringify(q);
+                    if (!usedQuestions.has(qString)) {
+                        selected.push({ ...q, level: level });
+                        usedQuestions.add(qString);
+                        addedCount++;
+                        if (addedCount === count) break;
+                    }
+                }
+            };
+            
+            addQuestionFromLevel('facil', 2);
+            addQuestionFromLevel('intermediario', 2);
+            addQuestionFromLevel('intermediario_dificil', 1);
+            addQuestionFromLevel('dificil', 1);
+            
+            gameState.usedQuestionPool = usedQuestions;
+            return selected;
+        }
+
+        function startGame() {
+            gameState = {
+                currentQuestionIndex: 0,
+                bombUsed: false,
+            };
+            gameState.currentQuestions = selectGameQuestions();
+
+            startScreen.classList.add('hidden');
+            endScreen.classList.add('hidden');
+            continueModal.classList.add('hidden');
+            gameScreen.classList.remove('hidden');
+
+            displayQuestion();
+            updateLifelines();
+        }
+        
+        function displayQuestion() {
+            setLifelinesDisabled(false);
+            const questionData = gameState.currentQuestions[gameState.currentQuestionIndex];
+            if (!questionData) {
+                endGame(true);
+                return;
+            }
+            questionNumberEl.textContent = gameState.currentQuestionIndex + 1;
+            questionTextEl.innerHTML = questionData.question;
+
+            // Embaralha as op&ccedil;&otilde;es e guarda o novo &iacute;ndice da resposta correta
+            const correctAnswerText = questionData.options[questionData.answer];
+            let shuffledOptions = shuffleArray([...questionData.options]);
+            gameState.currentCorrectIndex = shuffledOptions.indexOf(correctAnswerText);
+
+            optionsContainer.innerHTML = '';
+            shuffledOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn w-full text-left p-4 bg-slate-700 rounded-lg text-lg hover:bg-yellow-400 hover:text-slate-900 transition-colors duration-200 border-2 border-transparent';
+                button.innerHTML = `<span class="font-bold text-yellow-400 mr-2">${String.fromCharCode(65 + index)}:</span> ${option}`;
+                button.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+            
+            updateLifelines();
+        }
+        
+        function updateLifelines() {
+            bombBtn.disabled = gameState.bombUsed;
+        }
+
+        function setLifelinesDisabled(disabled) {
+            swapBtn.disabled = disabled;
+            bombBtn.disabled = disabled || gameState.bombUsed;
+        }
+
+        function selectAnswer(selectedIndex) {
+            setLifelinesDisabled(true);
+            const isCorrect = selectedIndex === gameState.currentCorrectIndex;
+            const optionButtons = optionsContainer.querySelectorAll('.option-btn');
+
+            optionButtons.forEach(btn => btn.disabled = true);
+
+            optionButtons[gameState.currentCorrectIndex].classList.add('correct');
+            if (isCorrect) {
+                document.getElementById('correct-sound').play();
+            } else {
+                document.getElementById('incorrect-sound').play();
+                optionButtons[selectedIndex].classList.add('incorrect');
+            }
+
+            setTimeout(() => {
+                if (isCorrect) {
+                    if (gameState.currentQuestionIndex === gameState.currentQuestions.length - 1) {
+                        endGame(true);
+                    } else {
+                        continueModal.classList.remove('hidden');
+                    }
+                } else {
+                    endGame(false);
+                }
+            }, 2000);
+        }
+        
+        function proceedToNextQuestion() {
+            continueModal.classList.add('hidden');
+            gameState.currentQuestionIndex++;
+            displayQuestion();
+        }
+
+        function useSwap() {
+            const currentQ = gameState.currentQuestions[gameState.currentQuestionIndex];
+            const level = currentQ.level;
+
+            let newQuestion;
+            const shuffledLevel = shuffleArray([...questions[level]]);
+            for(const q of shuffledLevel) {
+                if(JSON.stringify(q) !== JSON.stringify(currentQ)) {
+                    newQuestion = { ...q, level: level };
+                    break;
+                }
+            }
+
+            if (newQuestion) {
+                gameState.usedQuestionPool.add(JSON.stringify(newQuestion));
+                gameState.currentQuestions[gameState.currentQuestionIndex] = newQuestion;
+                displayQuestion();
+            }
+        }
+
+        function useBomb() {
+            if (gameState.bombUsed) return;
+            gameState.bombUsed = true;
+            bombBtn.disabled = true;
+
+            const correctAnswerIndex = gameState.currentCorrectIndex;
+            const optionButtons = optionsContainer.querySelectorAll('.option-btn');
+
+            const incorrectIndices = [];
+            for (let i = 0; i < optionButtons.length; i++) {
+                if (i !== correctAnswerIndex) {
+                    incorrectIndices.push(i);
+                }
+            }
+
+            shuffleArray(incorrectIndices);
+            
+            optionButtons[incorrectIndices[0]].disabled = true;
+            optionButtons[incorrectIndices[1]].disabled = true;
+        }
+
+        function endGame(isWinner, gaveUp = false) {
+            gameScreen.classList.add('hidden');
+            continueModal.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+
+            if (isWinner) {
+                endTitleEl.innerHTML = 'PARAB&Eacute;NS!';
+                endMessageEl.innerHTML = `Voc&ecirc; acertou todas as perguntas e ganhou ${formatCurrency(1000000)}!`;
+            } else if (gaveUp) {
+                endTitleEl.innerHTML = 'Fim de Jogo!';
+                endMessageEl.innerHTML = `Voc&ecirc; desistiu. Na modalidade 'Tudo ou Nada', n&atilde;o h&aacute; pr&ecirc;mio de consola&ccedil;&atilde;o. Tente novamente!`;
+            } else {
+                endTitleEl.innerHTML = 'Fim de Jogo!';
+                endMessageEl.innerHTML = `Que pena, voc&ecirc; errou! Nesta edi&ccedil;&atilde;o, &eacute; tudo ou nada. Tente novamente!`;
+            }
+        }
+
+        startBtn.addEventListener('click', startGame);
+        playAgainBtn.addEventListener('click', () => {
+            endScreen.classList.add('hidden');
+            startScreen.classList.remove('hidden');
+        });
+        swapBtn.addEventListener('click', useSwap);
+        bombBtn.addEventListener('click', useBomb);
+        continueBtn.addEventListener('click', proceedToNextQuestion);
+        stopGameBtn.addEventListener('click', () => endGame(false, true));
+
+    </script>
+</body>
+</html>
